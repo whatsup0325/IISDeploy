@@ -113,7 +113,7 @@ namespace IISDeploy
             {
                 string json = File.ReadAllText(settingsFile);
                 settings = JsonConvert.DeserializeObject<UserSettings>(json);
-            }
+            }          
         }
         public void SaveSetting()
         {
@@ -150,7 +150,7 @@ namespace IISDeploy
         private void MainForm_Load(object sender, EventArgs e)
         {
             IISListBox.DrawMode = DrawMode.OwnerDrawFixed;
-            IISListBox.ItemHeight = 60;
+            IISListBox.ItemHeight = 50;
         }
 
         private void IISListBox_DrawItem(object sender, DrawItemEventArgs e)
@@ -188,8 +188,17 @@ namespace IISDeploy
 
             e.Graphics.DrawString(dataItem.Site.Name, webNameFont, Brushes.Black, e.Bounds.Left + 3, e.Bounds.Top + 5);
 
+            string siteState = "";
+            try
+            {
+                siteState = dataItem.Site.State.ToString();
 
-            e.Graphics.DrawString("Stats:" + dataItem.Site.State.ToString(), statusFont, roomsBrush, e.Bounds.Left + 3, e.Bounds.Top + 24);
+            }catch
+            {
+                siteState = "Stopped";
+            }
+
+            e.Graphics.DrawString("Stats:" + siteState, statusFont, roomsBrush, e.Bounds.Left + 3, e.Bounds.Top + 24);
             e.Graphics.DrawString(dataItem.GitUrl.ToString(), urlFont, roomsBrush, e.Bounds.Left + 3, e.Bounds.Top + 40);
         }
 
