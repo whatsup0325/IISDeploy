@@ -308,23 +308,19 @@ namespace IISDeploy
 
             var setting = settings.webSettings.FirstOrDefault(x => x.webName == item.Site.Name);
 
-            if (setting == null)
-            {
-                return;
-            }
 
             SetDefault();
             WebNameLabel.Text = item.Site.Name;
-            GitUrlTextBox.Text = setting.gitUrl;
+            GitUrlTextBox.Text = setting?.gitUrl ?? "";
             FilePathTextBox.Text = Environment.ExpandEnvironmentVariables(item.Site.Applications["/"].VirtualDirectories["/"].PhysicalPath);
-            buildSelect.SelectedItem = setting.buildStrategy;
-            if (!string.IsNullOrEmpty(setting.targetProject))
+            buildSelect.SelectedItem = setting?.buildStrategy ?? "";
+            if (!string.IsNullOrEmpty(setting?.targetProject))
                 TargetProjectTextBox.Text = setting.targetProject;
 
-            if (!string.IsNullOrEmpty(setting.outputPath))
+            if (!string.IsNullOrEmpty(setting?.outputPath))
                 OutputPathTextBox.Text = setting.outputPath;
 
-            if (!string.IsNullOrEmpty(setting.branch))
+            if (!string.IsNullOrEmpty(setting?.branch))
                 BranchTextBox.Text = setting.branch;
 
             SetBuildStrategy();
