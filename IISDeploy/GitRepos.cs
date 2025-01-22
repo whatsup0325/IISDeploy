@@ -9,40 +9,36 @@ using static IISDeploy.CredentialService;
 
 namespace IISDeploy
 {
-    public class GitRepos
+    public class GitRepos : IDisposable
     {
-        CredentialService credentialService = new CredentialService();
-        string Url = "";
-        string targetName = "";
-        Credential? Credential = null;
+        private readonly CredentialService credentialService = new CredentialService();
+        private string Url = "";
+        private string targetName = "";
+        private Credential? Credential = null;
+        private bool disposed = false;
+
+        public string Message { get; private set; } = "";
 
         public GitRepos(string gitUrl)
         {
             Url = gitUrl;
             GetTargetName();
-
         }
 
-        public void GetTargetName()
+        private void GetTargetName()
         {
             Uri uri = new Uri(Url);
             string baseUrl = uri.GetLeftPart(UriPartial.Authority);
-
             targetName = $"git:{baseUrl}";
         }
 
-        public bool GetCredential()
+        private bool GetCredential()
         {
             Credential = credentialService.GetCredential(targetName);
-            if (Credential == null)
-            {
-                return false;
-            }
-            return true;
+            return Credential != null;
         }
 
-        public string Message = "";
-        public bool Clone(string path, string BranchName)
+        public bool Clone(string path, string branchName)
         {
             try
             {
@@ -52,17 +48,17 @@ namespace IISDeploy
                     return false;
                 }
 
-                Repository.Clone(Url, path, new CloneOptions()
+                Repository.Clone(Url, path, new CloneOptions
                 {
-                    BranchName = BranchName,
+                    BranchName = branchName,
                     FetchOptions = {
-                    CredentialsProvider =  (url, usernameFromUrl, types) =>
+                    CredentialsProvider = (url, usernameFromUrl, types) =>
                         new UsernamePasswordCredentials
                         {
                             Username = Credential!.UserName,
                             Password = Credential!.Password
                         }
-        }
+                }
                 });
                 return true;
             }
@@ -71,6 +67,27 @@ namespace IISDeploy
                 Message = e.Message;
                 return false;
             }
+        }
+
+        // 實現 IDisposable 接口
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                // 如果有其他非受控資源需要釋放，可以在這裡處理
+                disposed = true;
+            }
+        }
+
+        ~GitRepos()
+        {
+            Dispose(false);
         }
     }
 }

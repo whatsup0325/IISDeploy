@@ -62,21 +62,24 @@ namespace IISDeploy
         {
             string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             Status = "Cloning repository...";
-            GitRepos GitRepos = new GitRepos(gitUrl);
-            var cloneResult = GitRepos.Clone(tempDir, branch);
-            if (!cloneResult)
+
+            var gitRepo = new GitRepos(gitUrl);
+            try
             {
-                Status = $"Clone failed:{GitRepos.Message}";
-                return;
+                var cloneResult = gitRepo.Clone(tempDir, branch);
+                if (!cloneResult)
+                {
+                    Status = $"Clone failed: {gitRepo.Message}";
+                    return;
+                }
             }
-            else
+            finally
             {
-                Status = "Clone success!";
+                // 嘗試釋放相關資源
+                gitRepo.Dispose();
             }
 
             Status = "Updating files...";
-
-
 
             if (buildStrategy == null)
             {
@@ -94,13 +97,7 @@ namespace IISDeploy
                 site.Stop();
             }
 
-
-            if (Directory.Exists(path))
-            {
-                Status = $"Updating files in {path}...";
-                Directory.Delete(path, true);
-            }
-
+            // 直接覆蓋檔案
             DirectoryCopy(outputPath, path, true);
 
             if (isPause)
@@ -109,28 +106,59 @@ namespace IISDeploy
                 site.Start();
             }
 
-
-            Directory.Delete(outputPath, true);
+            // 清理暫存目錄
+            DeleteDirectory(tempDir);
 
             Status = "Deploy Success";
         }
 
+        public void DeleteDirectory(string directoryPath)
+        {
+            if (!Directory.Exists(directoryPath))
+            {
+                return;
+            }
+
+            var files = Directory.GetFiles(directoryPath);
+            var directories = Directory.GetDirectories(directoryPath);
+
+            foreach (var file in files)
+            {
+                File.SetAttributes(file, FileAttributes.Normal);
+                File.Delete(file);
+            }
+
+            foreach (var dir in directories)
+            {
+                DeleteDirectory(dir);
+            }
+
+            File.SetAttributes(directoryPath, FileAttributes.Normal);
+
+            Directory.Delete(directoryPath, false);
+        }
+
+
         private static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
         {
-            // 複製目錄及其內容
             DirectoryInfo dir = new DirectoryInfo(sourceDirName);
             DirectoryInfo[] dirs = dir.GetDirectories();
 
+            // 確保目標目錄存在
             if (!Directory.Exists(destDirName))
                 Directory.CreateDirectory(destDirName);
 
+            // 複製檔案
             FileInfo[] files = dir.GetFiles();
             foreach (FileInfo file in files)
             {
                 string tempPath = Path.Combine(destDirName, file.Name);
+
+                // 覆蓋檔案
                 file.CopyTo(tempPath, true);
             }
 
+            // 如果需要，遞迴處理子目錄
             if (copySubDirs)
             {
                 foreach (DirectoryInfo subdir in dirs)
