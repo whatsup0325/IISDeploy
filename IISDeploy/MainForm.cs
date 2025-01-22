@@ -169,7 +169,11 @@ namespace IISDeploy
                 roomsBrush = Brushes.Black;
             }
 
+            //var linePen = new Pen(Brushes.Black);
+            //var lineStartPoint = new Point(e.Bounds.Left, e.Bounds.Height + e.Bounds.Top);
+            //var lineEndPoint = new Point(e.Bounds.Width, e.Bounds.Height + e.Bounds.Top);
 
+            //e.Graphics.DrawLine(linePen, lineStartPoint, lineEndPoint);
 
             e.DrawBackground();
 
