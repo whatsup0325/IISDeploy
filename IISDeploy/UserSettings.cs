@@ -15,6 +15,9 @@ namespace IISDeploy
     {
         public string webName { get; set; } = string.Empty;
         public string gitUrl { get; set; } = string.Empty;
+        public string branch { get; set; } = string.Empty;
         public string buildStrategy { get; set; } = string.Empty;
+        public string outputPath { get; set; } = string.Empty;
+        public string targetProject { get; set; } = string.Empty;
     }
 }

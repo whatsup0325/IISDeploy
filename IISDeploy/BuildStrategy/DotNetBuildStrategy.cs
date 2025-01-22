@@ -7,26 +7,39 @@ using System.Threading.Tasks;
 
 namespace IISDeploy.BuildStrategy
 {
-    public class NodeJsBuildStrategy : IBuildStrategy
+    public class DotNetBuildStrategy : IBuildStrategy
     {
         public event Action<string>? OutputStringChanged;
 
+        private readonly string _projectFile;
         private readonly string _outputPath;
 
-        public NodeJsBuildStrategy(string outputPath)
+        public DotNetBuildStrategy(string projectFile, string outputPath)
         {
+            _projectFile = projectFile;
             _outputPath = outputPath;
         }
-
         public string Build(string sourcePath)
         {
-            Console.WriteLine("Executing Node.js build...");
+            Console.WriteLine("Executing .NET build for specific project...");
 
-            // 執行 npm install 和 npm run build
+            if (string.IsNullOrEmpty(_projectFile))
+            {
+                throw new ArgumentException("Project file path must be provided.");
+            }
+
+            string projectPath = Path.Combine(sourcePath, _projectFile);
+
+            if (!Directory.Exists(projectPath))
+            {
+                throw new FileNotFoundException($"Project file not found: {projectPath}");
+            }
+
+            // 執行 dotnet build 指定的專案
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = "cmd.exe",
-                Arguments = "/c npm install && npm run build",
+                Arguments = $"/c dotnet build \"{projectPath}\"",
                 WorkingDirectory = sourcePath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -61,25 +74,23 @@ namespace IISDeploy.BuildStrategy
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
 
-                // 等待命令完成
                 process.WaitForExit();
 
                 if (process.ExitCode != 0)
                 {
-                    throw new Exception($"Command failed with exit code {process.ExitCode}");
+                    throw new Exception(".NET build failed.");
                 }
             }
 
-            // 輸出在 dist 資料夾
-            string distPath = Path.Combine(sourcePath, "dist");
-            if (!Directory.Exists(distPath))
+            
+            string binPath = Path.Combine(sourcePath,_projectFile, _outputPath);
+            if (!Directory.Exists(binPath))
             {
-                OutputStringChanged?.Invoke("Build output directory not found: dist");
-                throw new DirectoryNotFoundException("Build output directory not found: dist");
+                OutputStringChanged?.Invoke("Build output directory not found: bin");
+                throw new DirectoryNotFoundException("Build output directory not found: bin");
             }
 
-            return distPath;
+            return binPath;
         }
     }
-
 }

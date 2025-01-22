@@ -1,6 +1,7 @@
 ﻿using Microsoft.Web.Administration;
 using LibGit2Sharp;
 using IISDeploy.BuildStrategy;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TreeView;
 
 namespace IISDeploy
 {
@@ -22,13 +23,23 @@ namespace IISDeploy
             }
         }
 
-        public void UseNodeJsBuild()
+        public void UseNodeJsBuild(string outputPath)
         {
-            this.buildStrategy = new NodeJsBuildStrategy();
+            this.buildStrategy = new NodeJsBuildStrategy(outputPath);
             buildStrategy.OutputStringChanged += (output) =>
             {
                 Status = output;
             };
+        }
+
+        public void UseDotNetBuild(string projectFile, string outputPath)
+        {
+            this.buildStrategy = new DotNetBuildStrategy(projectFile, outputPath);
+            buildStrategy.OutputStringChanged += (output) =>
+            {
+                Status = output;
+            };
+
         }
 
         // 列出所有 IIS 站點         
@@ -37,17 +48,22 @@ namespace IISDeploy
             return serverManager.Sites.ToList();
         }
 
-        public void DeployWithoutPause(string gitUrl, string siteName, string path)
+        public void DeployWithoutPause(string gitUrl, string siteName, string path, string branch)
         {
-            DeployGitCode(gitUrl, siteName, path);
+            DeployGitCode(gitUrl, siteName, path, branch, false);
         }
 
-        private void DeployGitCode(string gitUrl, string siteName, string path)
+        public void DeployWithPause(string gitUrl, string siteName, string path, string branch)
+        {
+            DeployGitCode(gitUrl, siteName, path, branch, true);
+        }
+
+        private void DeployGitCode(string gitUrl, string siteName, string path, string branch, bool isPause)
         {
             string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             Status = "Cloning repository...";
             GitRepos GitRepos = new GitRepos(gitUrl);
-            var cloneResult = GitRepos.Clone(tempDir, "main");
+            var cloneResult = GitRepos.Clone(tempDir, branch);
             if (!cloneResult)
             {
                 Status = $"Clone failed:{GitRepos.Message}";
@@ -70,6 +86,15 @@ namespace IISDeploy
 
             BuildManager buildManager = new BuildManager(buildStrategy);
             string outputPath = buildManager.ExecuteBuild(tempDir);
+
+            ServerManager serverManager = new ServerManager();
+            if (isPause)
+            {
+                var site = serverManager.Sites[siteName];
+                site.Stop();
+            }
+
+
             if (Directory.Exists(path))
             {
                 Status = $"Updating files in {path}...";
@@ -77,9 +102,17 @@ namespace IISDeploy
             }
 
             DirectoryCopy(outputPath, path, true);
+
+            if (isPause)
+            {
+                var site = serverManager.Sites[siteName];
+                site.Start();
+            }
+
+
             Directory.Delete(outputPath, true);
 
-            Status = "Depoly Sucess";
+            Status = "Deploy Success";
         }
 
         private static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)

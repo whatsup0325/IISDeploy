@@ -54,7 +54,7 @@ namespace IISDeploy
 
                 Repository.Clone(Url, path, new CloneOptions()
                 {
-                    BranchName = "Main",
+                    BranchName = BranchName,
                     FetchOptions = {
                     CredentialsProvider =  (url, usernameFromUrl, types) =>
                         new UsernamePasswordCredentials

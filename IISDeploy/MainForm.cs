@@ -15,6 +15,7 @@ namespace IISDeploy
             InitIISSites();
 
             buildSelect.SelectedIndex = 0;
+            IISListBox_SelectedIndexChanged(IISListBox, new EventArgs());
             IISManager.StatusChanged += (status) =>
             {
                 AddStatus(status);
@@ -83,16 +84,59 @@ namespace IISDeploy
             InitIISSites();
         }
 
-        public void SetBuildStrategy()
+        public bool SetBuildStrategy()
         {
-            if (buildSelect.SelectedIndex == 0)
+            if (buildSelect.SelectedItem is not string buildSelectString)
+                return false;
+
+            if (string.IsNullOrEmpty(OutputPathTextBox.Text))
             {
-                IISManager.UseNodeJsBuild();
+                MessageBox.Show("Please set the Output Path");
+                return false;
             }
-            else
+
+            if (buildSelectString == "NodeJs")
             {
-                //IISManager.SetBuildStrategy(new DotNetBuildStrategy());
+                IISManager.UseNodeJsBuild(OutputPathTextBox.Text);
+                return true;
             }
+            else if (buildSelectString == ".Net")
+            {
+                if (string.IsNullOrEmpty(buildSelectString))
+                {
+                    MessageBox.Show("Please set the target project");
+                    return false;
+                }
+
+                IISManager.UseDotNetBuild(TargetProjectTextBox.Text, OutputPathTextBox.Text);
+                TargetProjectPanel.Visible = true;
+                return true;
+            }
+
+            MessageBox.Show("Set Build Strategy Error");
+            return false;
+        }
+
+        private void SetDefault()
+        {
+            if (buildSelect.SelectedItem is not string buildSelectString)
+                return;
+
+            TargetProjectPanel.Visible = false;
+            if (buildSelectString == "NodeJs")
+            {
+                BranchTextBox.Text = "main";
+                OutputPathTextBox.Text = "dist";
+            }
+            if (buildSelectString == ".Net")
+            {
+                TargetProjectPanel.Visible = true;
+                BranchTextBox.Text = "master";
+                OutputPathTextBox.Text = "bin\\Debug\\net6.0-windows";
+            }
+
+
+
         }
 
         public void LoadSetting()
@@ -113,7 +157,7 @@ namespace IISDeploy
             {
                 string json = File.ReadAllText(settingsFile);
                 settings = JsonConvert.DeserializeObject<UserSettings>(json);
-            }          
+            }
         }
         public void SaveSetting()
         {
@@ -137,7 +181,10 @@ namespace IISDeploy
             {
                 webName = WebNameLabel.Text,
                 gitUrl = GitUrlTextBox.Text,
-                buildStrategy = buildSelect.SelectedItem?.ToString() ?? ""
+                branch = BranchTextBox.Text,
+                buildStrategy = buildSelect.SelectedItem?.ToString() ?? "",
+                outputPath = OutputPathTextBox.Text,
+                targetProject = TargetProjectTextBox.Text,
             });
 
             // 儲存為 JSON
@@ -145,6 +192,54 @@ namespace IISDeploy
             File.WriteAllText(settingsFile, json);
 
             Console.WriteLine($"Settings saved to {settingsFile}");
+        }
+
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            SaveSetting();
+            StatusText.Text = "";
+            SetBuildStrategy();
+            Task.Run(() => IISManager.DeployWithoutPause(GitUrlTextBox.Text, WebNameLabel.Text, FilePathTextBox.Text, BranchTextBox.Text));
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            SaveSetting();
+            StatusText.Text = "";
+
+            Task.Run(() =>
+                IISManager.DeployWithPause(GitUrlTextBox.Text, WebNameLabel.Text, FilePathTextBox.Text, BranchTextBox.Text)
+            );
+
+
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            SaveSetting();
+            StatusText.Text = "";
+            ControlIISSite(WebNameLabel.Text, "stop");
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            SaveSetting();
+            StatusText.Text = "";
+            ControlIISSite(WebNameLabel.Text, "start");
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            SaveSetting();
+        }
+
+        private void buildSelect_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (buildSelect.SelectedItem is string a)
+            {
+                SetDefault();
+            }
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -193,7 +288,8 @@ namespace IISDeploy
             {
                 siteState = dataItem.Site.State.ToString();
 
-            }catch
+            }
+            catch
             {
                 siteState = "Stopped";
             }
@@ -212,46 +308,26 @@ namespace IISDeploy
 
             var setting = settings.webSettings.FirstOrDefault(x => x.webName == item.Site.Name);
 
+            if (setting == null)
+            {
+                return;
+            }
+
+            SetDefault();
             WebNameLabel.Text = item.Site.Name;
-            GitUrlTextBox.Text = setting?.gitUrl ?? "";
-            FilePathTextBox.Text = item.Site.Applications["/"].VirtualDirectories["/"].PhysicalPath;
-            buildSelect.SelectedItem = setting?.buildStrategy ?? "";
-        }
+            GitUrlTextBox.Text = setting.gitUrl;
+            FilePathTextBox.Text = Environment.ExpandEnvironmentVariables(item.Site.Applications["/"].VirtualDirectories["/"].PhysicalPath);
+            buildSelect.SelectedItem = setting.buildStrategy;
+            if (!string.IsNullOrEmpty(setting.targetProject))
+                TargetProjectTextBox.Text = setting.targetProject;
 
-        private void button1_Click(object sender, EventArgs e)
-        {
-            StatusText.Text = "";
-            SetBuildStrategy();
-            Task.Run(() => IISManager.DeployWithoutPause(GitUrlTextBox.Text, WebNameLabel.Text, FilePathTextBox.Text));
-        }
+            if (!string.IsNullOrEmpty(setting.outputPath))
+                OutputPathTextBox.Text = setting.outputPath;
 
-        private void button2_Click(object sender, EventArgs e)
-        {
-            StatusText.Text = "";
-            ControlIISSite(WebNameLabel.Text, "stop");
+            if (!string.IsNullOrEmpty(setting.branch))
+                BranchTextBox.Text = setting.branch;
 
             SetBuildStrategy();
-            Task.Run(() => IISManager.DeployWithoutPause(GitUrlTextBox.Text, WebNameLabel.Text, FilePathTextBox.Text));
-
-            ControlIISSite(WebNameLabel.Text, "start");
-
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            StatusText.Text = "";
-            ControlIISSite(WebNameLabel.Text, "stop");
-        }
-
-        private void button4_Click(object sender, EventArgs e)
-        {
-            StatusText.Text = "";
-            ControlIISSite(WebNameLabel.Text, "start");
-        }
-
-        private void button5_Click(object sender, EventArgs e)
-        {
-            SaveSetting();
         }
     }
 

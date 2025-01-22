@@ -33,6 +33,10 @@
             panel2 = new Panel();
             StatusText = new TextBox();
             panel1 = new Panel();
+            TargetProjectPanel = new Panel();
+            label4 = new Label();
+            TargetProjectTextBox = new TextBox();
+            OutputPathTextBox = new TextBox();
             buildSelect = new ComboBox();
             button5 = new Button();
             button4 = new Button();
@@ -40,9 +44,12 @@
             button2 = new Button();
             button1 = new Button();
             FilePathTextBox = new TextBox();
+            label5 = new Label();
             label1 = new Label();
             label3 = new Label();
+            BranchTextBox = new TextBox();
             GitUrlTextBox = new TextBox();
+            label6 = new Label();
             label2 = new Label();
             WebNameLabel = new Label();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -51,6 +58,7 @@
             splitContainer1.SuspendLayout();
             panel2.SuspendLayout();
             panel1.SuspendLayout();
+            TargetProjectPanel.SuspendLayout();
             SuspendLayout();
             // 
             // IISListBox
@@ -114,6 +122,8 @@
             // panel1
             // 
             panel1.BorderStyle = BorderStyle.FixedSingle;
+            panel1.Controls.Add(TargetProjectPanel);
+            panel1.Controls.Add(OutputPathTextBox);
             panel1.Controls.Add(buildSelect);
             panel1.Controls.Add(button5);
             panel1.Controls.Add(button4);
@@ -121,9 +131,12 @@
             panel1.Controls.Add(button2);
             panel1.Controls.Add(button1);
             panel1.Controls.Add(FilePathTextBox);
+            panel1.Controls.Add(label5);
             panel1.Controls.Add(label1);
             panel1.Controls.Add(label3);
+            panel1.Controls.Add(BranchTextBox);
             panel1.Controls.Add(GitUrlTextBox);
+            panel1.Controls.Add(label6);
             panel1.Controls.Add(label2);
             panel1.Controls.Add(WebNameLabel);
             panel1.Dock = DockStyle.Fill;
@@ -133,14 +146,49 @@
             panel1.Size = new Size(801, 604);
             panel1.TabIndex = 1;
             // 
+            // TargetProjectPanel
+            // 
+            TargetProjectPanel.Controls.Add(label4);
+            TargetProjectPanel.Controls.Add(TargetProjectTextBox);
+            TargetProjectPanel.Location = new Point(358, 417);
+            TargetProjectPanel.Name = "TargetProjectPanel";
+            TargetProjectPanel.Size = new Size(165, 62);
+            TargetProjectPanel.TabIndex = 6;
+            TargetProjectPanel.Visible = false;
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Font = new Font("Microsoft Sans Serif", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label4.Location = new Point(6, 7);
+            label4.Name = "label4";
+            label4.Size = new Size(101, 18);
+            label4.TabIndex = 1;
+            label4.Text = "Target Project";
+            // 
+            // TargetProjectTextBox
+            // 
+            TargetProjectTextBox.Location = new Point(6, 30);
+            TargetProjectTextBox.Name = "TargetProjectTextBox";
+            TargetProjectTextBox.Size = new Size(130, 23);
+            TargetProjectTextBox.TabIndex = 5;
+            // 
+            // OutputPathTextBox
+            // 
+            OutputPathTextBox.Location = new Point(139, 447);
+            OutputPathTextBox.Name = "OutputPathTextBox";
+            OutputPathTextBox.Size = new Size(213, 23);
+            OutputPathTextBox.TabIndex = 5;
+            // 
             // buildSelect
             // 
             buildSelect.FormattingEnabled = true;
-            buildSelect.Items.AddRange(new object[] { "NodeJs" });
+            buildSelect.Items.AddRange(new object[] { "NodeJs", ".Net" });
             buildSelect.Location = new Point(10, 447);
             buildSelect.Name = "buildSelect";
             buildSelect.Size = new Size(121, 23);
             buildSelect.TabIndex = 4;
+            buildSelect.SelectedIndexChanged += buildSelect_SelectedIndexChanged;
             // 
             // button5
             // 
@@ -196,10 +244,20 @@
             // 
             FilePathTextBox.BackColor = Color.White;
             FilePathTextBox.Enabled = false;
-            FilePathTextBox.Location = new Point(10, 377);
+            FilePathTextBox.Location = new Point(10, 312);
             FilePathTextBox.Name = "FilePathTextBox";
-            FilePathTextBox.Size = new Size(484, 23);
+            FilePathTextBox.Size = new Size(560, 23);
             FilePathTextBox.TabIndex = 2;
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Font = new Font("Microsoft Sans Serif", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label5.Location = new Point(137, 426);
+            label5.Name = "label5";
+            label5.Size = new Size(86, 18);
+            label5.TabIndex = 1;
+            label5.Text = "Output Path";
             // 
             // label1
             // 
@@ -215,25 +273,43 @@
             // 
             label3.AutoSize = true;
             label3.Font = new Font("Microsoft Sans Serif", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label3.Location = new Point(13, 356);
+            label3.Location = new Point(13, 291);
             label3.Name = "label3";
             label3.Size = new Size(65, 18);
             label3.TabIndex = 1;
             label3.Text = "File Path";
             // 
+            // BranchTextBox
+            // 
+            BranchTextBox.BackColor = Color.White;
+            BranchTextBox.Location = new Point(420, 380);
+            BranchTextBox.Name = "BranchTextBox";
+            BranchTextBox.Size = new Size(130, 23);
+            BranchTextBox.TabIndex = 2;
+            // 
             // GitUrlTextBox
             // 
             GitUrlTextBox.BackColor = Color.White;
-            GitUrlTextBox.Location = new Point(10, 302);
+            GitUrlTextBox.Location = new Point(10, 380);
             GitUrlTextBox.Name = "GitUrlTextBox";
-            GitUrlTextBox.Size = new Size(484, 23);
+            GitUrlTextBox.Size = new Size(401, 23);
             GitUrlTextBox.TabIndex = 2;
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Font = new Font("Microsoft Sans Serif", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label6.Location = new Point(420, 359);
+            label6.Name = "label6";
+            label6.Size = new Size(55, 18);
+            label6.TabIndex = 1;
+            label6.Text = "Branch";
             // 
             // label2
             // 
             label2.AutoSize = true;
             label2.Font = new Font("Microsoft Sans Serif", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label2.Location = new Point(10, 281);
+            label2.Location = new Point(13, 359);
             label2.Name = "label2";
             label2.Size = new Size(61, 18);
             label2.TabIndex = 1;
@@ -267,6 +343,8 @@
             panel2.PerformLayout();
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
+            TargetProjectPanel.ResumeLayout(false);
+            TargetProjectPanel.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -289,5 +367,12 @@
         private Button button4;
         private Button button3;
         private Button button5;
+        private TextBox TargetProjectTextBox;
+        private Label label5;
+        private Label label4;
+        private TextBox OutputPathTextBox;
+        private Panel TargetProjectPanel;
+        private TextBox BranchTextBox;
+        private Label label6;
     }
 }
